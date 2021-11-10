@@ -71,7 +71,7 @@ func main() {
 	}
 
 	// setup timer
-	fmt.Printf("The quiz and timer will begin after you press on the enter key - good luck!")
+	fmt.Printf("The quiz and timer will begin after you press on the enter key - good luck!\n")
 	reader.ReadString('\n')
 	timer := time.NewTimer(time.Duration(timerSeconds) * time.Second)
 	go QuizUser(problems, &totalCorrect)
@@ -112,16 +112,16 @@ func QuizUser(problems [][]string, totalCorrect *int) {
 	for i, problem := range problems {
 		answer, err := strconv.Atoi(problem[1])
 		if err != nil {
-			fmt.Printf("Quiz answer for problem %v is not a number, skipping to next question.", i)
+			fmt.Printf("Quiz answer for problem %v is not a number, skipping to next question.\n", i)
 			continue
 		}
 
-		fmt.Println("Problem ", i+1, ": ", problem[0])
+		fmt.Printf("Problem %v: %v\n", i+1, problem[0])
 		text, _ := reader.ReadString('\n')
 		text = text[:len(text)-2] // gets rid of newline and byte 13 character. Consider using trim or other scan method.
 		userAnswer, err := strconv.Atoi(text)
 		if err != nil {
-			fmt.Println("Please enter a valid number. Answer rejected.")
+			fmt.Printf("Please enter a valid number. Answer rejected.\n")
 		}
 
 		if userAnswer == answer {
