@@ -51,7 +51,8 @@ func main() {
 
 				timerSeconds = t
 			default:
-				// do nothing, don't want to write nonsense for the arguments that require values.
+				// Do nothing, don't want to write nonsense for the arguments that require values.
+				// TODO: learn and use flags instead.
 			}
 		}
 	}
@@ -70,13 +71,15 @@ func main() {
 		rand.Shuffle(len(problems), func(i, j int) { problems[i], problems[j] = problems[j], problems[i] })
 	}
 
-	// setup timer
+	// Setup timer
 	fmt.Printf("The quiz and timer will begin after you press on the enter key - good luck!\n")
 	reader.ReadString('\n')
 	timer := time.NewTimer(time.Duration(timerSeconds) * time.Second)
 	go QuizUser(problems, &totalCorrect)
 
-	// it's a race against the clock; execution blocks here until one of the channels receives a message
+	// It's a race against the clock; execution blocks here until one of the channels receives a message
+	// The timer channel will receive a message when timerSeconds have elapsed. quizDone should receive a message when
+	// the for loop of the QuizUser goroutine has finished.
 	select {
 	case <-timer.C:
 		fmt.Printf("Time is up!\n")
@@ -105,7 +108,7 @@ func readCsvFile(filePath string) [][]string {
 	return records
 }
 
-// Separated from main to aid legibility and because I wanted to simply use a return in the select statement.
+// Separated from main to aid legibility and because I wanted to run a goroutine for this section.
 func QuizUser(problems [][]string, totalCorrect *int) {
 
 	*totalCorrect = 0
