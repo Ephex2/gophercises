@@ -2,6 +2,7 @@
 - Command-line tool to generate quizzes based on csv input files, defaults to problems.csv in this folder.
     - CSV files must not have headers. First column is a question, whereas the second column is an answer.
     - Answers should be integers.
+        - This could be revisited, but when implementing argument validation this seemed to be the simplest way.
 
 - Shuffle flag on the tool allows questions to be shuffled.
 
@@ -14,5 +15,5 @@
 - From same directory, no parameters:
     - go run .\quizgame.go 
 
-- From same directory, many paramters:
-    - go run .\quizme.go -shuffle -filepath C:\mystuff\someproblems.csv -timer 120
+- From one directory above, many paramters:
+    - go run .\1.QuizGame\quizgame.go -timer 100 -shuffle -filepath .\1.QuizGame\problems.csv
