@@ -52,7 +52,7 @@ func main() {
 				timerSeconds = t
 			default:
 				// Do nothing, don't want to write nonsense for the arguments that require values.
-				// TODO: learn and use flags instead.
+				// TODO: use flags instead.
 			}
 		}
 	}

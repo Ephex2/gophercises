@@ -1,0 +1,12 @@
+{
+    "pairs": [
+        {
+            "path": "/test",
+            "url": "https://www.github.com/Ephex2"
+        },
+        {
+            "path": "/anotherone",
+            "url": "https://yourbasic.org/golang/convert-string-to-byte-slice/"
+        }
+    ]
+}
