@@ -1,9 +1,8 @@
 # URL Shortener; Gophercise number 2
-This project is meant to be a URL shortener, or more accurately, a URL redirector. It can take config files that are json,
-yaml, or hard-coded variables that will build a mapping between pathes on the web server and URLs. 
+This project is meant to be a URL shortener. It can take config files that are json, yaml, or hard-coded variables (see [main](./main/main.go) )that will build a mapping between pathes on the web server and URLs. 
 
-Note: the yaml files must be in the same format as the testyaml.yml file (only path entries with url subentries, all below a pairs header).
-Ditto for json; look at the test.json file for the pattern to follow.
+Note: the yaml files must be in the same format as [this](testyaml.yml) file.
+Ditto for json; look at [this](test.json) file for the pattern to follow.
 
 flags:
 - -yamlpath is used to specify the path to a yaml file with a similar format to testyaml.yml
