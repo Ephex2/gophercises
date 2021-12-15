@@ -20,7 +20,9 @@ type Options struct {
 	Arc  string `json:"arc"`
 }
 
-func LoadAdventure(adventureData []byte) Arcs {
+var RuntimeArcs Arcs
+
+func NewArc(adventureData []byte) Arcs {
 	// Need to unmarshal object with rawJson data first to make the raw map
 	var a adventureRaw
 	err := json.Unmarshal(adventureData, &a)

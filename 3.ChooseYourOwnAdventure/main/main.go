@@ -5,23 +5,24 @@ import (
 	"fmt"
 	"gopheradventures/model"
 	"gopheradventures/presentation"
+	"net/http"
 	"os"
 	"path/filepath"
 )
 
 var adventureData []byte
-var arcs model.Arcs
 
 // flag vars
-var defaultArc string
+var DefaultArc string
 var cli bool
+var jsonFilePath string
 
 func init() {
 	// Flag setup
-	var jsonFilePath string
-	flag.StringVar(&jsonFilePath, "jsonfile", "", "Path to the json file defining model arcs. Default is the json string in gopher.json.go in the model package.")
-	flag.StringVar(&defaultArc, "defaultarc", "intro", "Title of the arc that the adventure should start on. In the example given (gopher.json.go), the arc is intro.")
-	flag.BoolVar(&cli, "cli", true, "When specified, the choose your own adventure experience will be presented through the terminal rather than a webpage.")
+	flag.StringVar(&jsonFilePath, "filepath", "", "Path to the json file defining model arcs. Default is the json string in gopher.json.go in the model package.")
+	flag.StringVar(&DefaultArc, "defaultarc", "intro", "Title of the arc that the adventure should start on. In the example given (gopher.json.go), the arc is intro.")
+	flag.BoolVar(&cli, "cli", false, "When specified, the choose your own adventure experience will be presented through the terminal rather than a webpage.")
+	flag.Parse()
 
 	// Get adventure data depending on flag passed
 	if jsonFilePath != "" {
@@ -41,11 +42,21 @@ func init() {
 }
 
 func main() {
-	arcs = model.LoadAdventure(adventureData)
+	model.RuntimeArcs = model.NewArc(adventureData)
+
+	fmt.Printf("Value of cli flag in main block: %v", cli)
 
 	if cli {
-		presentation.CliFlow(arcs, defaultArc)
+		presentation.CliFlow(model.RuntimeArcs, DefaultArc)
 	} else {
-		presentation.TemplateFlow(arcs, defaultArc)
+		presentation.SetDefaultArc(DefaultArc)
+		http.HandleFunc("/", presentation.TemplateFlow)
+
+		for _, arc := range model.RuntimeArcs {
+			arcPath := "/" + arc.Title
+			http.HandleFunc(arcPath, presentation.TemplateFlow)
+		}
+
+		http.ListenAndServe(":8080", http.DefaultServeMux)
 	}
 }
