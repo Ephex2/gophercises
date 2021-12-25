@@ -1,1 +1,1 @@
-go test .\linkparser -v
+go test .\linkparser -v -coverprofile cover.out
