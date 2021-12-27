@@ -21,7 +21,7 @@ Here is a sample (simple) sitemap. Note that this probably wouldn't be a valid r
 ```
 
 Note that this tool hasn't been definitively tested, but instead was made to the specs of the fifth gophercises exercise on [https://courses.calhoon.io](https://courses.calhoon.io).
-
+Executable name: ```siteMapBuilder.exe```.
 <br></br>
 ## Optional Flags
 Here's an overview of the different flags available for main.go:
