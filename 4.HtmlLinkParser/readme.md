@@ -17,3 +17,7 @@ This project is meant to parse an html file and output all of the links found wi
 ## Optional Flags
 Here's an overview of the different flags available for main.go:
 - -path: This flag is used to provide the path towards an html file that must be parsed.
+
+## Note
+The fifth exercise makes use of the linkparser package developped in this exercise.
+	

@@ -25,7 +25,7 @@ func GetLinks(r *bufio.Reader) (output []LinkOutput) {
 	var parseLinks func(*xHtml.Node)
 	var workingOutput []LinkOutput
 
-	// function defined here so it can use the workingOutput without accepting it as a parameter and returning it (is this better though?)
+	// function defined here so it can use the workingOutput variable without accepting it as a parameter and returning it (is this better though?)
 	parseLinks = func(n *xHtml.Node) {
 		var output LinkOutput // reset output for each function call
 
