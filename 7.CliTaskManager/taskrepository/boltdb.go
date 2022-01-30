@@ -17,21 +17,20 @@ type boltRepository struct {
 }
 
 func newBoltRepository() (*boltRepository, error) {
-	db, err := bolt.Open(path, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	repo := &boltRepository{}
+	err := repo.Open()
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
+	defer repo.db.Close()
 
-	repo := &boltRepository{db: db}
 	err = repo.db.Update(func(tx *bolt.Tx) (err error) {
 		// Root bucket for this project is TaskList, creating it in init function.
 		_, err = tx.CreateBucketIfNotExists(rootBucketName)
 		if err != nil {
 			return err
 		}
-		//TODO: clean up the comment and return
-		//repo.rootBucket = tx.Bucket(rootBucketName)
+
 		return err
 	})
 
