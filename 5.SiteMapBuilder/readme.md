@@ -20,7 +20,7 @@ Here is a sample (simple) sitemap. Note that this probably wouldn't be a valid r
 </urlset>
 ```
 
-Note that this tool hasn't been definitively tested, but instead was made to the specs of the fifth gophercises exercise on [https://courses.calhoon.io](https://courses.calhoon.io).
+Note that this tool hasn't been definitively tested, but instead was made to the specs of the fifth gophercises exercise on [https://courses.calhoun.io](https://courses.calhoon.io).
 Executable name: ```siteMapBuilder.exe```.
 <br></br>
 ## Optional Flags

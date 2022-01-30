@@ -99,8 +99,9 @@ func (s *Sitemap) crawlSite(uri string, maxDepth int, depth int) {
 }
 
 func escapeXml(uri string) (escapedUri string) {
-	// Implemented a simple xml escape function from string to string. Not sure on performance but it seems straightforward enough
-	// xml package functions to unescape needed conversions to byte and use of readers.... on top of this, creating a byte buffer seemed to double the string for some reason.
+	// Implemented a simple xml escape function from string to string.
+	// Not sure on performance but it seems straightforward enough
+	// xml package functions to unescape needed conversions to byte and use of readers, had a bug, decided to fix it by following KISS principle.
 	escapedUri = strings.Replace(uri, "&", "&amp;", -1)
 	escapedUri = strings.Replace(escapedUri, "<", "&lt;", -1)
 	escapedUri = strings.Replace(escapedUri, ">", "&gt;", -1)

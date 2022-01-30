@@ -65,7 +65,6 @@ func parseText(n *xHtml.Node, parent *xHtml.Node) (text string) {
 		text += n.Data
 	}
 
-	// Depth first search, go through all children before siblings. THis allows the strings to be output in the correct order.
 	if n.FirstChild != nil {
 		text += parseText(n.FirstChild, parent)
 	}
@@ -96,7 +95,8 @@ func sanitizeText(text string) (sanitizedText string) {
 }
 
 func PrintOutput(output []LinkOutput) {
-	// Decided to output marshalled json instead of hacking together the same output as in the exercise page. Got introduced to the json.MarshalIndent() function to pretty print json.
+	// Decided to output marshalled json instead of hacking together the same output as in the exercise page.
+	// Got introduced to the json.MarshalIndent() function to pretty print json.
 	jsonByte, err := json.MarshalIndent(output, "", "    ")
 	if err != nil {
 		log.Fatal(err.Error())
