@@ -1,14 +1,8 @@
 package blackjack
 
-import "github.com/Ephex2/gophercises/10.DeckOfCards/deck"
+// Write tests based on game rules
+// -- Start with a test player interface
+// Refactor code location, refactor in general, write tests
+// -- Write tests and test interface first
 
-type turn struct {
-	deck     deck.Deck
-	turnOver bool
-}
-
-func newTurn(g *Game) *turn {
-	return &turn{}
-}
-
-func (t *turn) Hit()
+// Work on interesting player interface packages (ai and terminal)

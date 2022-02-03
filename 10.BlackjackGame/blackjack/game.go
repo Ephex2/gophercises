@@ -16,36 +16,10 @@ type state struct {
 	deck       *deck.Deck
 }
 
-type Dealer struct {
-	faceUp   []deck.Card
-	faceDown deck.Card
-}
-
 type Options struct {
 	Decks          int
 	StartingPoints int
 	Rounds         int
-}
-
-// Returns the int value of the card that the dealer is currently showing
-// Allows us to make the faceup []card property unexported, allowing us to keep players from editing it.
-func (d *Dealer) FaceUpValue() int {
-	publicHand := Hand{d.faceUp}
-	return publicHand.Evaluate()
-}
-
-func (d *Dealer) setup(deckPointer *deck.Deck) {
-	d.faceDown = deckPointer.Draw(1)[0]
-	d.faceUp = deckPointer.Draw(1)
-}
-
-// Get the current value of the dealer's hand, from the game's perspective.
-// Method cannot be exported otherwise Players could evaluate the hidden value of a dealer's hand.
-func (d *Dealer) evaluateHand() int {
-	cards := append(d.faceUp, d.faceDown)
-	h := Hand{Cards: cards}
-
-	return h.Evaluate()
 }
 
 // Sets-up a game for play. Will need to call .Play() on the returned Game pointer, passing in the Players to start the game.
@@ -117,17 +91,10 @@ func (g *Game) playRound() {
 	// Turn order based on order of players passed in, for the moment
 	for _, p := range *g.state.playerInfo {
 		p.hands[0] = Hand{Cards: g.state.deck.Draw(2)}
-		p.sendInfo()
+		p.SendInfo()
 
 		// Offer a side-bet (insurance bet) if dealer is showing an ace
-		if g.state.Dealer.FaceUpValue() == 11 {
-			sideBet := p.player.OfferSideBet(g.state.Dealer)
-			if sideBet > 0 {
-				// Ensure sidebet is not too large, if so, set it to all current points.
-				//disposablePoints = p.points - p.currentBet
-				p.sideBet = sideBet
-			}
-		}
+		g.evaluateSidebet(p)
 
 		// Perform double-down and blackjack cases first, as they close options for all hands this round.
 		// Evaluate if a double-down could occur; ensure player has enough points and is in the right score range.
@@ -141,7 +108,6 @@ func (g *Game) playRound() {
 		// Players will perform regular Hit, Split and Stand operations in the last else block
 		if p.hands[0].Evaluate() == 21 {
 			// BlackJack ! Pay out 1.5 times bet. Rounding down.
-			// TODO: use decimals instead of rounding down integer values for Points.
 			pointIncrease := p.currentBet + (p.currentBet / 2)
 			if p.currentBet%2 != 0 {
 				pointIncrease = p.currentBet + ((p.currentBet - 1) / 2)
@@ -154,7 +120,7 @@ func (g *Game) playRound() {
 		} else if doubleDown {
 			// Draw a 'hidden' card and close player options for the round; they won't enter into the else{} block.
 			p.hands[0].Cards = append(p.hands[0].Cards, g.state.deck.Draw(1)...)
-			p.sendInfo()
+			p.SendInfo()
 			p.currentBet = p.currentBet + p.currentBet
 		} else {
 			// Increase in the len of p.hands will make this loop again for each split.
@@ -201,7 +167,15 @@ func (g *Game) playRound() {
 // If a player attempts to bet more than they have they are all in (bet all remaining points).
 func (g *Game) placeBets() {
 	for _, playerInfo := range *g.state.playerInfo {
-		playerInfo.PlaceBet()
+		playerInfo.OfferBet(g.state.Dealer)
+	}
+}
+
+// Sidebets allow players to have an insurance policy agaist the house's blackjack.
+// Only offered when dealer is showing an ace.
+func (g *Game) evaluateSidebet(p PlayerInfo) {
+	if g.state.Dealer.FaceUpValue() == 11 {
+		p.OfferSideBet(g.state.Dealer)
 	}
 }
 
@@ -209,8 +183,12 @@ func (g *Game) dealerTurn(doubleDown bool) {
 	hit := true
 	for hit {
 		handValue := g.state.Dealer.evaluateHand()
+
+		// Dealer must evaluate Ace as eleven, no special handling necessary.
+		// Evaluate already returns the highest possible value of a hand.
 		if handValue >= 17 || handValue == -1 {
 			hit = false
+			continue
 		}
 
 		// Take the hit.
@@ -226,37 +204,53 @@ func (g *Game) evaluatePayout() {
 		// Otherwise, collect the sidebet.
 		// This is 0 most of the time strategically and is so by default.
 		if p.sideBet != 0 {
+			var sideBetValue int
 			if g.state.Dealer.evaluateHand() == 21 {
 				// Sidebets have a 2-to-1 payout
-
-				p.player.UpdatePoints(p.sideBet * 2)
+				sideBetValue = p.sideBet * 2
 			} else {
-				p.player.UpdatePoints(p.sideBet * -1)
+				sideBetValue = p.sideBet * -1
 			}
 
-			p.sendInfo()
+			err := p.UpdatePoints(sideBetValue)
+			if err != nil {
+				p.Done(err.Error())
+				g.removePlayer(p.id)
+			}
 		}
 
+		// Each split hand is at value p.currentBet. Non-split hands will simply loop once.
 		for _, h := range p.hands {
-			// Each split hand is at value p.currentBet
-			playerValue := h.Evaluate()
+			betMultiplier := 1
+			if playerValue := h.Evaluate(); dealerValue > playerValue {
+				betMultiplier = -1
+			}
 
+			p.UpdatePoints(betMultiplier * p.currentBet)
 		}
 	}
 }
 
-// Removes all players who are done (points == 0)
+// Removes all players who are done (points <= 0), and sends a message through the player interface.
 func (g *Game) removeDonePlayers() {
-	for i, p := range *g.state.playerInfo {
-		if p.points == 0 {
-			g.removePlayer(p.id, i)
+	for _, p := range *g.state.playerInfo {
+		if p.points <= 0 {
+			g.removePlayer(p.id)
 		}
 	}
 }
 
-// Removes player from a game, if the game is in progress.
-func (g *Game) removePlayer(id int, index int) {
+// Removes player from a game, if the game is in progress. Based on index of the palyer in the PlayerInfo slice.
+func (g *Game) removePlayer(id int) {
 	if len(*g.state.playerInfo) > 0 {
+		var index int
+		for i, p := range *g.state.playerInfo {
+			if p.id == id {
+				index = i
+				p.Done("You are out of points.")
+			}
+		}
+
 		oldPlayerInfo := *g.state.playerInfo
 		newPlayerInfo := append(oldPlayerInfo[0:index], oldPlayerInfo[index+1:]...)
 		*g.state.playerInfo = newPlayerInfo
