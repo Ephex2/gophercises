@@ -16,12 +16,6 @@ type state struct {
 	deck       *deck.Deck
 }
 
-type Options struct {
-	Decks          int
-	StartingPoints int
-	Rounds         int
-}
-
 // Sets-up a game for play. Will need to call .Play() on the returned Game pointer, passing in the Players to start the game.
 func New(opts Options) *Game {
 	if opts.Decks == 0 {
@@ -167,14 +161,14 @@ func (g *Game) playRound() {
 // If a player attempts to bet more than they have they are all in (bet all remaining points).
 func (g *Game) placeBets() {
 	for _, playerInfo := range *g.state.playerInfo {
-		playerInfo.OfferBet(g.state.Dealer)
+		playerInfo.OfferBet()
 	}
 }
 
 // Sidebets allow players to have an insurance policy agaist the house's blackjack.
 // Only offered when dealer is showing an ace.
 func (g *Game) evaluateSidebet(p PlayerInfo) {
-	if g.state.Dealer.FaceUpValue() == 11 {
+	if g.state.Dealer.FaceUp() == 11 {
 		p.OfferSideBet(g.state.Dealer)
 	}
 }

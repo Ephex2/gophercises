@@ -9,7 +9,7 @@ type Dealer struct {
 
 // Returns the int value of the card that the dealer is currently showing
 // Allows us to make the faceup []card property unexported, allowing us to keep players from editing it.
-func (d *Dealer) FaceUpValue() int {
+func (d *Dealer) FaceUp() int {
 	publicHand := Hand{d.faceUp}
 	return publicHand.Evaluate()
 }

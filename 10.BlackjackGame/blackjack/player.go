@@ -8,7 +8,7 @@ import (
 // The player interface allows the game type to interact with the different types of players in a game.
 type Player interface {
 	SendInfo(PlayerInfo)          // Set a player's info.
-	OfferBet(*Dealer) int         // Returns a player's starting bet for a round.
+	OfferBet() int                // Returns a player's starting bet for a round.
 	OfferDoubleDown(*Dealer) bool // Allows a player to choose whether or not to double-down
 	OfferHit(*Dealer) bool        // Offers a player to hit the deck for a new card in the current hand.
 	OfferSideBet(*Dealer) int     // Allows players to determine if they want to take a sideBet, and if they do, for how much (int return). A negative value does nothing.
@@ -61,8 +61,8 @@ func (pi *PlayerInfo) SendInfo() {
 
 // Asks player to place bets. Bets larger than current points are set to current points.
 // If bet is <= 0, player is Done()
-func (pi *PlayerInfo) OfferBet(d *Dealer) {
-	betValue := pi.player.OfferBet(d)
+func (pi *PlayerInfo) OfferBet() {
+	betValue := pi.player.OfferBet()
 
 	if betValue > pi.GetPoints() {
 		betValue = pi.GetPoints()
