@@ -1,49 +1,49 @@
 package blackjack
 
-import "github.com/Ephex2/gophercises/10.DeckOfCards/deck"
+import (
+	"github.com/Ephex2/gophercises/10.DeckOfCards/deck"
+)
 
 // A hand held by a player. Each hand has an individual bet associated with it to support splitting.
 type Hand struct {
 	Cards []deck.Card // The set of cards in a given hand, at a given moment in the game.
 }
 
-// Busting has a negative value (-1).
-// Return value of hand, evaluating aces as either 1 or 11.
-// Always returns highest possible legal value (so, A hand Ace - Four - Four would return 19).
+// Returns the  value of a given hand, evaluating aces as either 1 or 11.
+// Busting returns a negative value of -1.
+// Always returns the highest possible legal value of a hand (so, A hand of Ace, Four, and Four would return 19).
 func (h *Hand) Evaluate() int {
 	var sum int
-	var sum2 int
+	var aceCounter int
 
-	for i, card := range h.Cards {
-		switch card.Value {
-		case 1:
-			newHand := []Hand{{h.Cards}}
-			newHand[0].Cards[i].Value = 0
-			sum += 1
-			sum2 += newHand[0].Evaluate()
-		case 0:
+	for _, card := range h.Cards {
+		// Your hand will always bust with >1 Ace, stop caring about Aces after the first one.
+		if card.Value == 1 && aceCounter < 1 {
 			sum += 11
-			sum2 += 11
-		case 11:
+			aceCounter++
+			continue
+		}
+
+		switch card.Value {
+		// Next three cases are giving the face cards their appropriate 10 value.
+		case 11, 12, 13:
 			sum += 10
-			sum2 += 10
-		case 12:
-			sum += 10
-			sum2 += 10
-		case 13:
-			sum += 10
-			sum2 += 10
 		default:
 			sum += card.Value
-			sum2 += card.Value
 		}
 	}
 
-	if sum > 21 && sum2 > 21 {
-		return -1
-	} else if sum >= sum2 {
+	if sum > 21 && aceCounter == 1 {
+		// Build alternate score, in case our first Ace at 11 busts us. 11 - 10 = 1 ; current - 10 = alternate hand score.
+		alternate := sum - 10
+		if alternate <= 21 {
+			return alternate
+		}
+	} else if sum <= 21 {
+		// Sum always higher than alternate if not bust.
 		return sum
-	} else {
-		return sum2
 	}
+
+	// Either alternate > 21 or aceCounter is 0 and sum is <> 21
+	return -1
 }
