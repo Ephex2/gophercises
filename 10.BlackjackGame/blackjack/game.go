@@ -1,6 +1,8 @@
 package blackjack
 
 import (
+	"fmt"
+
 	"github.com/Ephex2/gophercises/10.DeckOfCards/deck"
 )
 
@@ -12,7 +14,7 @@ type Game struct {
 
 type state struct {
 	Dealer     *Dealer
-	playerInfo *[]PlayerInfo
+	playerInfo []PlayerInfo
 	deck       *deck.Deck
 }
 
@@ -27,35 +29,50 @@ func New(opts Options) *Game {
 		opts.StartingPoints = 100
 	}
 
+	deck := setupDeck(opts)
+	state := &state{deck: &deck, Dealer: &Dealer{}}
+	return &Game{Options: opts, state: state}
+}
+
+// Resets the deck used by the dealer. Assumes plastic card is always set in the middle of the multideck.
+func setupDeck(opts Options) deck.Deck {
 	deck := deck.NewMultipleDeck(opts.Decks)
 	deck.Shuffle()
-	// Set plastic card to reduce impact of card counting - remove part of the deck.
-	if deckSize := len(deck); deckSize%2 == 0 {
-		deck = deck[0:(deckSize / 2)]
+	// Set 'plastic card' to reduce impact of card counting - remove part of the deck.
+	if deckSize := len(deck.Cards); deckSize%2 == 0 {
+		deck.Cards = deck.Cards[0:(deckSize / 2)]
 	} else {
-		deck = deck[0:((deckSize + 1) / 2)]
+		deck.Cards = deck.Cards[0:((deckSize + 1) / 2)]
 	}
 
-	state := &state{deck: &deck}
-	return &Game{Options: opts, state: state}
+	return deck
 }
 
 func (g *Game) Play(players []Player) {
 	//	Assign player IDs and starting points, game's deck should already be shuffled
 	for i, player := range players {
 		pi := PlayerInfo{id: i + 1, points: g.Options.StartingPoints, player: player}
-		*g.state.playerInfo = append(*g.state.playerInfo, pi)
+
+		if g.state.playerInfo == nil {
+			g.state.playerInfo = []PlayerInfo{pi}
+		} else {
+			g.state.playerInfo = append(g.state.playerInfo, pi)
+		}
 	}
 
 	// Determine number of rounds to play. Default is until each player busts or leaves the game.
-	for !g.gameOver() {
+	for !g.isGameOver() {
 		g.playRound()
 		g.roundsPlayed += 1
 	}
+
+	for i := range g.state.playerInfo {
+		g.state.playerInfo[i].done("You've made it to the end of the game!")
+	}
 }
 
-func (g *Game) gameOver() bool {
-	if len(*g.state.playerInfo) == 0 {
+func (g *Game) isGameOver() bool {
+	if len(g.state.playerInfo) == 0 {
 		return true
 	}
 
@@ -66,38 +83,27 @@ func (g *Game) gameOver() bool {
 	return false
 }
 
+/* Turn order:
+ - 1. Take bets
+ - 2. Dealer shows face-up card.
+ - 3. Players in turn-order perform actions.
+  - If the face-up dealer card is an Ace, they can sidebet.
+  - If a hand has two cards and the values are equal, split is possible.
+ - 4. Dealer finishes their turn.
+ - 5. Evaluate how to update points.
+-- Eliminate players when possible.
+*/
 func (g *Game) playRound() {
-	/* Turn order:
-	1. Take bets
-	2. Dealer shows face-up card.
-	3. Players in turn-order perform actions.
-		- If dealer's face-up card is an Ace, they can sidebet.
-		- If a hand has two cards and the cards' values are equal, split is possible.
-	4. Dealer finishes their turn.
-	5. Evaluate how to update points.
-	-- Throughout; eliminate players when possible.
-	*/
 	var doubleDown bool
-	g.placeBets()
-	g.removeDonePlayers()
-	g.state.Dealer.setup(g.state.deck)
+	g.setupNewRound()
 
 	// Turn order based on order of players passed in, for the moment
-	for _, p := range *g.state.playerInfo {
-		p.hands[0] = Hand{Cards: g.state.deck.Draw(2)}
-		p.SendInfo()
-
+	for i, p := range g.state.playerInfo {
 		// Offer a side-bet (insurance bet) if dealer is showing an ace
-		g.evaluateSidebet(p)
+		g.evaluateSidebet(p, p.hands[0])
 
-		// Perform double-down and blackjack cases first, as they close options for all hands this round.
+		// Perform double-down and blackjack cases first, as they close options for all of a player's hands this round.
 		// Evaluate if a double-down could occur; ensure player has enough points and is in the right score range.
-		if p.hands[0].Evaluate() >= 9 && p.hands[0].Evaluate() <= 11 {
-			if p.currentBet > p.points-p.currentBet {
-				doubleDown = p.player.OfferDoubleDown(g.state.Dealer)
-			}
-		}
-
 		// If a player naturals 21, play stops for them. Similarly, if they double-down play is over.
 		// Players will perform regular Hit, Split and Stand operations in the last else block
 		if p.hands[0].Evaluate() == 21 {
@@ -111,69 +117,99 @@ func (g *Game) playRound() {
 			// This allows us to not have to check to make sure we can afford the new bet.
 			p.currentBet += pointIncrease
 
-		} else if doubleDown {
-			// Draw a 'hidden' card and close player options for the round; they won't enter into the else{} block.
-			p.hands[0].Cards = append(p.hands[0].Cards, g.state.deck.Draw(1)...)
-			p.SendInfo()
-			p.currentBet = p.currentBet + p.currentBet
-		} else {
-			// Increase in the len of p.hands will make this loop again for each split.
-			for i := 0; i < len(p.hands); i++ {
-				var hit = true
-
-				for hit {
-					if p.hands[i].Evaluate() == -1 {
-						// Player is bust
-						break
-					}
-
-					// Check if split is possible, offer split to player. If accepted, loop may run multiple times.
-					// Ensure player has enough points for split ; each split costs the current bet.
-					// 3 splits costs 4 * the current bet, for example.
-					if len(p.hands[i].Cards) == 2 && p.hands[i].Cards[0] == p.hands[i].Cards[1] {
-						if p.currentBet*(len(p.hands)+1) <= p.points {
-							if p.player.OfferSplit(g.state.Dealer) {
-								p.hands[i].Cards = []deck.Card{
-									p.hands[i].Cards[0],
-								}
-
-								p.hands[i+1] = Hand{
-									[]deck.Card{
-										p.hands[i].Cards[0],
-									},
-								}
-							}
-						}
-					}
-
-					hit = p.player.OfferHit(g.state.Dealer)
+		} else if p.hands[0].Evaluate() >= 9 && p.hands[0].Evaluate() <= 11 {
+			if p.currentBet > p.points-p.currentBet {
+				if doubleDown = p.player.OfferDoubleDown(g.state.Dealer, p.hands[0]); doubleDown {
+					// Draw a 'hidden' card and close player options for the round; they won't enter into the else{} block.
+					p.hands[0].Cards = append(p.hands[0].Cards, g.drawCardsFromDeck(1)...)
+					p.currentBet = p.currentBet + p.currentBet
 				}
-
 			}
 		}
+
+		// Increase in the len of p.hands will make this loop again for each split.
+		for i := 0; i < len(p.hands); i++ {
+			var hit = true
+			for hit {
+				if p.hands[i].Evaluate() == -1 {
+					// Player is bust
+					break
+				}
+
+				// Check if split is possible, offer split to player. If accepted, loop may run multiple times.
+				// Ensure player has enough points for split ; each split costs the current bet.
+				// 3 splits costs 4 * the current bet, for example.
+				if p.offerSplit(g.state.Dealer, &p.hands[i]) {
+					p.hands[i] = Hand{
+						[]deck.Card{
+							p.hands[i].Cards[0],
+						},
+					}
+
+					p.hands = append(p.hands, Hand{
+						[]deck.Card{
+							p.hands[i].Cards[0],
+						},
+					},
+					)
+
+					p.updateInfo()
+				}
+
+				hit = p.offerHit(g.state.Dealer, p.hands[i])
+				if hit {
+					p.hands[i].Cards = append(p.hands[i].Cards, g.drawCardsFromDeck(1)...)
+				}
+			}
+		}
+
+		// Ensure playerinfo array has current player data; I find this easier to read than directly using array index, can refactor.
+		g.state.playerInfo[i] = p
 	}
 
-	g.dealerTurn(doubleDown)
-	g.evaluatePayout()
+	g.dealerTurn()
+	g.evaluatePayout(doubleDown)
+}
+
+func (g *Game) setupNewRound() {
+	g.removeDonePlayers()
+	for i, p := range g.state.playerInfo {
+		// Setup player
+		p.newRound(g)
+		g.state.playerInfo[i] = p
+	}
+	g.placeBets()
+
+	dealerCards := g.drawCardsFromDeck(2)
+	g.state.Dealer.setup(dealerCards)
 }
 
 // Take starting bets, house needs to keep a tally of each player's bet.
 // If a player attempts to bet more than they have they are all in (bet all remaining points).
 func (g *Game) placeBets() {
-	for _, playerInfo := range *g.state.playerInfo {
-		playerInfo.OfferBet()
+	for i, p := range g.state.playerInfo {
+		p.offerBet()
+
+		if p.currentBet < 1 {
+			p.done("Betting 0 or less indicates that you wish to quit the table.")
+			g.removePlayer(p.id)
+			return
+		}
+
+		g.state.playerInfo[i] = p
 	}
 }
 
 // Sidebets allow players to have an insurance policy agaist the house's blackjack.
 // Only offered when dealer is showing an ace.
-func (g *Game) evaluateSidebet(p PlayerInfo) {
+func (g *Game) evaluateSidebet(p PlayerInfo, h Hand) {
 	if g.state.Dealer.FaceUp() == 11 {
-		p.OfferSideBet(g.state.Dealer)
+		p.offerSideBet(g.state.Dealer, h)
 	}
 }
 
-func (g *Game) dealerTurn(doubleDown bool) {
+// Take actions for the dealer. Must hit if not busted or hand value is < 17.
+func (g *Game) dealerTurn() {
 	hit := true
 	for hit {
 		handValue := g.state.Dealer.evaluateHand()
@@ -186,17 +222,15 @@ func (g *Game) dealerTurn(doubleDown bool) {
 		}
 
 		// Take the hit.
-		g.state.Dealer.faceUp = append(g.state.Dealer.faceUp, g.state.deck.Draw(1)...)
+		g.state.Dealer.faceUp = append(g.state.Dealer.faceUp, g.drawCardsFromDeck(1)...)
 	}
 }
 
-func (g *Game) evaluatePayout() {
+// Evaluate each player's payout, including sidebets and
+func (g *Game) evaluatePayout(doubleDown bool) {
 	dealerValue := g.state.Dealer.evaluateHand()
 
-	for _, p := range *g.state.playerInfo {
-		// Start by evaluating if a player warrants a sidebet payout.
-		// Otherwise, collect the sidebet.
-		// This is 0 most of the time strategically and is so by default.
+	for i, p := range g.state.playerInfo {
 		if p.sideBet != 0 {
 			var sideBetValue int
 			if g.state.Dealer.evaluateHand() == 21 {
@@ -206,29 +240,67 @@ func (g *Game) evaluatePayout() {
 				sideBetValue = p.sideBet * -1
 			}
 
-			err := p.UpdatePoints(sideBetValue)
+			err := p.updatePoints(sideBetValue)
 			if err != nil {
-				p.Done(err.Error())
+				p.done(err.Error())
 				g.removePlayer(p.id)
 			}
 		}
 
 		// Each split hand is at value p.currentBet. Non-split hands will simply loop once.
 		for _, h := range p.hands {
-			betMultiplier := 1
-			if playerValue := h.Evaluate(); dealerValue > playerValue {
-				betMultiplier = -1
+			var betMultiplier = 1
+			fmt.Printf("Player hand value: %v -- Dealer hand value: %v\n", h.Evaluate(), dealerValue)
+			if doubleDown {
+				betMultiplier = 2
 			}
 
-			p.UpdatePoints(betMultiplier * p.currentBet)
+			if playerValue := h.Evaluate(); dealerValue > playerValue {
+				betMultiplier *= -1
+			} else if playerValue == dealerValue {
+				betMultiplier *= 0
+			}
+
+			p.updatePoints(betMultiplier * p.currentBet)
+		}
+
+		g.state.playerInfo[i] = p
+	}
+}
+
+// Wraps calls from deck, if deck runs out, automatically recreates one with the appropriate number of cards.
+func (g *Game) drawCardsFromDeck(count int) []deck.Card {
+	var err error
+	cards, err := g.state.deck.Draw(count)
+
+	// Keep drawing from deck until we have drawn enough cards, we should only enter loop if we tried to overdraw.
+	// If deck is empty, loop should do nothing but reset deck with setupDeck()
+	for err != nil && len(cards) != count {
+		var cardsToDraw int
+		if cardsToDraw = (count - len(cards)); len(g.state.deck.Cards) < cardsToDraw {
+			cardsToDraw = len(g.state.deck.Cards)
+		}
+
+		// cardsToDraw should always be <= len(deck), shouldn't run into any overdraw errors.
+		cardsDrawn, _ := g.state.deck.Draw(cardsToDraw)
+
+		if cardsDrawn != nil {
+			cards = append(cards, cardsDrawn...)
+		}
+
+		if len(g.state.deck.Cards) == 0 {
+			*g.state.deck = setupDeck(g.Options)
 		}
 	}
+
+	return cards
 }
 
 // Removes all players who are done (points <= 0), and sends a message through the player interface.
 func (g *Game) removeDonePlayers() {
-	for _, p := range *g.state.playerInfo {
+	for _, p := range g.state.playerInfo {
 		if p.points <= 0 {
+			p.done("You are out of points.")
 			g.removePlayer(p.id)
 		}
 	}
@@ -236,17 +308,16 @@ func (g *Game) removeDonePlayers() {
 
 // Removes player from a game, if the game is in progress. Based on index of the palyer in the PlayerInfo slice.
 func (g *Game) removePlayer(id int) {
-	if len(*g.state.playerInfo) > 0 {
+	if len(g.state.playerInfo) > 0 {
 		var index int
-		for i, p := range *g.state.playerInfo {
+		for i, p := range g.state.playerInfo {
 			if p.id == id {
 				index = i
-				p.Done("You are out of points.")
 			}
 		}
 
-		oldPlayerInfo := *g.state.playerInfo
+		oldPlayerInfo := g.state.playerInfo
 		newPlayerInfo := append(oldPlayerInfo[0:index], oldPlayerInfo[index+1:]...)
-		*g.state.playerInfo = newPlayerInfo
+		g.state.playerInfo = newPlayerInfo
 	}
 }

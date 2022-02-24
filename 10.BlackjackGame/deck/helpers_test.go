@@ -23,7 +23,7 @@ func testDeckIntegrity(t *testing.T, numDecks int, d deck.Deck, numJokers int) {
 		var testCount int
 		var shouldCount = 4 * numDecks
 		var shouldText = fmt.Sprintf("%v, for value: %v", shouldCount, i)
-		for _, card := range d {
+		for _, card := range d.Cards {
 			if card.Value == i {
 				testCount++
 			}
@@ -36,7 +36,7 @@ func testDeckIntegrity(t *testing.T, numDecks int, d deck.Deck, numJokers int) {
 
 	if numJokers != 0 {
 		var jokerTestCount int
-		for _, card := range d {
+		for _, card := range d.Cards {
 			if card.Value == 0 {
 				jokerTestCount++
 			}

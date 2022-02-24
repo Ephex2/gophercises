@@ -15,8 +15,8 @@ func TestCardString(t *testing.T) {
 	d.AddJoker(1)
 	d.Sort()
 
-	firstCard := d[0]
-	lastCard := d[len(d)-1]
+	firstCard := d.Cards[0]
+	lastCard := d.Cards[len(d.Cards)-1]
 
 	firstCardTestString := firstCard.String()
 	firstCardShouldString := "Ace of Spades with color Black"

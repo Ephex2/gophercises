@@ -30,9 +30,9 @@ func TestDeckSorting(t *testing.T) {
 	d.Sort()
 	// First three cards should be Ace of Spades, Two of Spades, and Three of Spades.
 	for i := 0; i < 4; i++ {
-		if d[i].Value != i+1 && d[i].Suit != 0 {
+		if d.Cards[i].Value != i+1 && d.Cards[i].Suit != 0 {
 			expectedString := fmt.Sprintf("%v for card in position %v in sorted deck is incorrect.", i+1, i)
-			testError(t, "DeckSorting()", "Deck", expectedString, fmt.Sprint(d[i].Value))
+			testError(t, "DeckSorting()", "Deck", expectedString, fmt.Sprint(d.Cards[i].Value))
 		}
 	}
 }
@@ -42,22 +42,81 @@ func TestDeckCustomSortings(t *testing.T) {
 	// First four cards should have value 1 ( each be Aces ).
 	d := deck.NewDeck()
 	less := func(i, j int) bool {
-		if d[i].Value < d[j].Value {
+		if d.Cards[i].Value < d.Cards[j].Value {
 			return true
-		} else if d[i].Value > d[j].Value {
+		} else if d.Cards[i].Value > d.Cards[j].Value {
 			return false
 		}
 
-		return d[i].Suit < d[j].Suit
+		return d.Cards[i].Suit < d.Cards[j].Suit
 	}
 
 	d.CustomSort(less)
 
 	for i := 0; i < 4; i++ {
-		if d[i].Value != 1 {
+		if d.Cards[i].Value != 1 {
 			// One of the first four cards is not an Ace, error:
-			testError(t, "CustomSort()", "Deck", fmt.Sprint(1), fmt.Sprint(d[i].Value))
+			testError(t, "CustomSort()", "Deck", fmt.Sprint(1), fmt.Sprint(d.Cards[i].Value))
 		}
+	}
+}
+
+func TestDraw(t *testing.T) {
+	// Need to ensure:
+	// - Cards are drawn as expected when a value is specified.
+	// - If the deck overflows, send an error indicating this.
+	d := deck.NewDeck()
+
+	lenBefore := len(d.Cards)
+	card1, err := d.Draw(1)
+	lenAfter := len(d.Cards)
+
+	if err != nil {
+		t.Errorf("End of deck error when trying to draw first card from deck. Error given: %v", err)
+	}
+
+	if lenBefore == lenAfter {
+		testError(t, "Draw()", "Deck", "deck size to decrement after drawing first card from deck", "no change in deck size")
+	}
+
+	if len(card1) != 1 {
+		testError(t, "Draw()", "Deck", "1", fmt.Sprint(len(card1)))
+	}
+
+	d.Shuffle() // Decks may or may not be shuffled
+
+	// Perform similar test as above, now that deck is shuffled.
+	card2, err := d.Draw(2)
+	if err != nil {
+		t.Errorf("Error when drawing cards 2 and 3 from a new deck. Error given: %v", err)
+	}
+
+	if len(card2) != 2 {
+		testError(t, "Draw()", "Deck", "2", fmt.Sprint(len(card1)))
+	}
+
+	// See what happens upon overdraw. Expected; error returned, no cards returned.
+	overdrawCards, err := d.Draw(999)
+	if err == nil {
+		testError(t, "Draw()", "Deck", "A non-nil error when overdrawing from deck", "a nil error")
+	}
+
+	if len(overdrawCards) != 0 {
+		testError(t, "Draw()", "Deck", "No cards drawn when deck is overdrawn", fmt.Sprintf("%v cards drawn", len(overdrawCards)))
+	}
+
+	// Drawing 0 cards should return nil.
+	noCards, err := d.Draw(0)
+	if noCards != nil || err != nil {
+		testError(t,
+			"Draw()",
+			"Deck",
+			"no cards drawn and no error",
+			fmt.Sprintf("%v cards drawn and the following err: %v",
+				len(noCards),
+				err.Error(),
+			),
+		)
 	}
 }
 
@@ -73,7 +132,7 @@ func TestShuffle(t *testing.T) {
 		var internalHitCount int
 
 		for j := 0; j < 3; j++ {
-			if d[i].Value == i && d[i].Suit == 0 {
+			if d.Cards[i].Value == i && d.Cards[i].Suit == 0 {
 				internalHitCount++
 			}
 		}
@@ -109,13 +168,13 @@ func TestRemoveCard(t *testing.T) {
 	d.RemoveCard(6)
 	d.RemoveCard(7)
 
-	if len(d) != 44 {
-		testError(t, "RemoveCard()", "Deck", "44 cards in deck", fmt.Sprint(len(d)))
+	if len(d.Cards) != 44 {
+		testError(t, "RemoveCard()", "Deck", "44 cards in deck", fmt.Sprint(len(d.Cards)))
 	}
 
 	var sixCount int
 	var sevenCount int
-	for _, card := range d {
+	for _, card := range d.Cards {
 		if card.Value == 6 {
 			sixCount++
 		}

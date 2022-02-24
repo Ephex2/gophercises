@@ -14,9 +14,10 @@ func (d *Dealer) FaceUp() int {
 	return publicHand.Evaluate()
 }
 
-func (d *Dealer) setup(deckPointer *deck.Deck) {
-	d.faceDown = deckPointer.Draw(1)[0]
-	d.faceUp = deckPointer.Draw(1)
+// Draws the dealers initial hand
+func (d *Dealer) setup(twoCards []deck.Card) {
+	d.faceDown = twoCards[0]
+	d.faceUp = []deck.Card{twoCards[1]}
 }
 
 // Get the current value of the dealer's hand, from the game's perspective.

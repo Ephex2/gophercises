@@ -1,6 +1,7 @@
 package deck
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -8,27 +9,29 @@ import (
 )
 
 // A deck defines methods applicable to a given []Card.
-type Deck []Card
+type Deck struct {
+	Cards []Card
+}
 
 // Decks should be sorted by suit and then by value.
 // Generates a new 52 card deck already sorted.
 func NewDeck() Deck {
-	deck := newDeckOfCards()
-	return deck
+	cards := newDeckOfCards()
+	return Deck{Cards: cards}
 }
 
 // Returns a deck consisting of *count* 52-card decks.
 // The decks are appended in order already sorted. However, the multiple card deck is not already sorted.
 func NewMultipleDeck(count int) (deck Deck) {
 	for i := 0; i < count; i++ {
-		deck = append(deck, newDeckOfCards()...)
+		deck.Cards = append(deck.Cards, newDeckOfCards()...)
 	}
 
 	return
 }
 
 // Returns a sorted deck of 52 cards.
-func newDeckOfCards() Deck {
+func newDeckOfCards() []Card {
 	var cards []Card
 
 	for _, val := range []Suit{Spades, Diamonds, Clubs, Hearts} {
@@ -45,7 +48,7 @@ func newDeckOfCards() Deck {
 func (d *Deck) String() []string {
 	var out []string
 
-	for _, card := range *d {
+	for _, card := range d.Cards {
 		out = append(out, card.String())
 	}
 
@@ -54,22 +57,21 @@ func (d *Deck) String() []string {
 
 // Draws n cards from the deck, removing it.
 // If attempting to draw more cards than are in the deck, draw all remaining cards.
-func (d *Deck) Draw(count int) (cards []Card) {
-	d2 := *d
-
-	if count > len(d2) {
-		count = len(d2)
+func (d *Deck) Draw(count int) (cards []Card, err error) {
+	if count == 0 {
+		return nil, nil
 	}
 
-	for i := 0; i < count; i++ {
-		cards = append(cards, d2[0])
-
-		// Remove topmost card
-		d2 = d2[1:]
+	if count > len(d.Cards) {
+		errMsg := fmt.Sprintf("Overdraw: Attempted to draw %v cards from deck of size %v", count, len(d.Cards))
+		err = errors.New(errMsg)
+		return nil, err
 	}
 
-	d = &d2
-	return cards
+	cards = d.Cards[0:count]
+	d.Cards = d.Cards[count:]
+
+	return cards, nil
 }
 
 // Prints the string representation of each ordered card in the deck on a new line.
@@ -83,29 +85,27 @@ func (d *Deck) Print() {
 // Suits will be shown in the order they are written in the constant section.
 // For reference (at time of writing): Spades, Diamonds, Clubs, Hearts, Joker
 func (d *Deck) Sort() {
-	sort.Slice(*d, func(i, j int) bool {
-		d2 := *d
-		if d2[i].Suit < d2[j].Suit {
+	sort.Slice(d.Cards, func(i, j int) bool {
+		if d.Cards[i].Suit < d.Cards[j].Suit {
 			return true
-		} else if d2[i].Suit > d2[j].Suit {
+		} else if d.Cards[i].Suit > d.Cards[j].Suit {
 			return false
 		}
 
-		return d2[i].Value < d2[j].Value
+		return d.Cards[i].Value < d.Cards[j].Value
 	})
 }
 
 // Given a custom sorting function, return the deck sorted by this function.
 func (d *Deck) CustomSort(less func(i, j int) bool) {
-	sort.Slice(*d, less)
+	sort.Slice(d.Cards, less)
 }
 
 // Shuffle deck, using current time as seed.
 // Based on: https://yourbasic.org/golang/shuffle-slice-array/
 func (d *Deck) Shuffle() {
-	d2 := *d
 	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(d2), func(i, j int) { d2[i], d2[j] = d2[j], d2[i] })
+	rand.Shuffle(len(d.Cards), func(i, j int) { d.Cards[i], d.Cards[j] = d.Cards[j], d.Cards[i] })
 }
 
 // Adds *count* cards with the Joker suit to the deck.
@@ -113,19 +113,16 @@ func (d *Deck) AddJoker(count int) {
 	for i := 0; i < count; i++ {
 		joker := Card{Value: 0, Suit: 5}
 		joker.Color = getCardColor(joker.Suit)
-		*d = append(*d, joker)
+		d.Cards = append(d.Cards, joker)
 	}
 }
 
 // Removes all cards of the input *value* from the deck. Some games may omit the use of 2s or 3s, for example.
 func (d *Deck) RemoveCard(value int) {
-	d2 := *d
-	for i, card := range d2 {
+	for i, card := range d.Cards {
 		if card.Value == value {
 			// without len(d2) - 1, the last element gets added to the deck each time this if is entered.
-			d2 = append(d2[:i], d2[i+1:]...)
+			d.Cards = append(d.Cards[:i], d.Cards[i+1:]...)
 		}
 	}
-
-	*d = d2
 }

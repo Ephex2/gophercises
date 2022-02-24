@@ -8,60 +8,78 @@ import (
 )
 
 func TestEvaluate(t *testing.T) {
-	valueHandMap := make(map[int]blackjack.Hand)
-
-	// Bust! Should return -1
-	valueHandMap[-1] = blackjack.Hand{
-		[]deck.Card{
-			{Value: 13},
-			{Value: 13},
-			{Value: 13},
-		},
+	// using a map with value as key doesn't allow us to reuse different hands for the same value.
+	type valueHand struct {
+		value int
+		hand  blackjack.Hand
 	}
 
-	// Aces Should be high if you do not bust
-	valueHandMap[17] = blackjack.Hand{
-		[]deck.Card{
-			{Value: 1},
-			{Value: 10},
-			{Value: 6},
+	var valueHands = []valueHand{{
+		value: -1,
+		hand: blackjack.Hand{
+			[]deck.Card{
+				{Value: 13},
+				{Value: 13},
+				{Value: 13},
+			},
 		},
-	}
+	}}
 
-	// Aces Should be low if them being high causes a bust, blackjack should not bust.
-	valueHandMap[21] = blackjack.Hand{
-		[]deck.Card{
-			{Value: 1},
-			{Value: 10},
-			{Value: 10},
+	valueHands = append(valueHands, valueHand{
+		value: 17,
+		hand: blackjack.Hand{
+			[]deck.Card{
+				{Value: 1},
+				{Value: 10},
+				{Value: 6},
+			},
 		},
-	}
+	},
+	)
 
-	// Blackjack should not bust without an Ace.
-	valueHandMap[21] = blackjack.Hand{
-		[]deck.Card{
-			{Value: 2},
-			{Value: 9},
-			{Value: 10},
+	valueHands = append(valueHands, valueHand{
+		value: 21,
+		hand: blackjack.Hand{
+			[]deck.Card{
+				{Value: 1},
+				{Value: 10},
+				{Value: 10},
+			},
 		},
-	}
+	},
+	)
 
-	// Many Aces!
-	valueHandMap[14] = blackjack.Hand{
-		[]deck.Card{
-			{Value: 1},
-			{Value: 1},
-			{Value: 1},
-			{Value: 1},
+	valueHands = append(valueHands, valueHand{
+		value: 14,
+		hand: blackjack.Hand{
+			[]deck.Card{
+				{Value: 1},
+				{Value: 1},
+				{Value: 1},
+				{Value: 1},
+			},
 		},
-	}
+	},
+	)
+
+	valueHands = append(valueHands, valueHand{
+		value: 21,
+		hand: blackjack.Hand{
+			[]deck.Card{
+				{Value: 2},
+				{Value: 9},
+				{Value: 10},
+			},
+		},
+	},
+	)
 
 	// Key of map is expected result. Value of map is a given hand.
-	for k, v := range valueHandMap {
-		testOutput := v.Evaluate()
+	for _, valueHand := range valueHands {
+		testOutput := valueHand.hand.Evaluate()
 
-		if testOutput != k {
-			t.Errorf("When evaluating hands, expected %v, got %v", k, testOutput)
+		if testOutput != valueHand.value {
+			t.Errorf("When evaluating hands, expected %v, got %v", valueHand.value, testOutput)
 		}
 	}
 }
