@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Ephex2/gophercises/10.DeckOfCards/deck"
+	"github.com/Ephex2/gophercises/10.BlackJackGame/deck"
 )
 
 func testError(t *testing.T, method string, typ string, expected string, received string) {

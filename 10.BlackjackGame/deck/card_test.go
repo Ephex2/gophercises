@@ -3,7 +3,7 @@ package deck_test
 import (
 	"testing"
 
-	"github.com/Ephex2/gophercises/10.DeckOfCards/deck"
+	"github.com/Ephex2/gophercises/10.BlackJackGame/deck"
 )
 
 // Helper functions are in helpers_test.go.

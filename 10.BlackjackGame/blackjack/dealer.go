@@ -1,6 +1,6 @@
 package blackjack
 
-import "github.com/Ephex2/gophercises/10.DeckOfCards/deck"
+import "github.com/Ephex2/gophercises/10.BlackJackGame/deck"
 
 type Dealer struct {
 	faceUp   []deck.Card

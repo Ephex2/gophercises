@@ -1,7 +1,7 @@
 package blackjack
 
 import (
-	"github.com/Ephex2/gophercises/10.DeckOfCards/deck"
+	"github.com/Ephex2/gophercises/10.BlackJackGame/deck"
 )
 
 // A hand held by a player.

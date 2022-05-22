@@ -3,7 +3,7 @@ package blackjack_test
 import (
 	"fmt"
 
-	"github.com/Ephex2/gophercises/10.DeckOfCards/blackjack"
+	"github.com/Ephex2/gophercises/10.BlackJackGame/blackjack"
 )
 
 type TestPlayer struct {

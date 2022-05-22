@@ -1,17 +1,7 @@
 package main
 
-import (
-	"github.com/Ephex2/gophercises/10.DeckOfCards/blackjack"
-	"github.com/Ephex2/gophercises/10.DeckOfCards/blackjackai"
-)
+import "github.com/Ephex2/gophercises/10.BlackJackGame/cmd"
 
 func main() {
-	opts := blackjack.Options{
-		Decks:  10,
-		Rounds: 3,
-	}
-
-	game := blackjack.New(opts)
-	ai := &blackjackai.AiPlayer{}
-	game.Play([]blackjack.Player{ai})
+	cmd.Execute()
 }

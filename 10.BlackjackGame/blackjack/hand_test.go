@@ -3,8 +3,8 @@ package blackjack_test
 import (
 	"testing"
 
-	"github.com/Ephex2/gophercises/10.DeckOfCards/blackjack"
-	"github.com/Ephex2/gophercises/10.DeckOfCards/deck"
+	"github.com/Ephex2/gophercises/10.BlackJackGame/blackjack"
+	"github.com/Ephex2/gophercises/10.BlackJackGame/deck"
 )
 
 func TestEvaluate(t *testing.T) {

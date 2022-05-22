@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Ephex2/gophercises/10.DeckOfCards/blackjack"
+	"github.com/Ephex2/gophercises/10.BlackJackGame/blackjack"
 )
 
 // This is a sort of integration test between a test ai and its use by the blackjack game.
