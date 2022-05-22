@@ -7,8 +7,8 @@ import (
 	"github.com/Ephex2/gophercises/10.DeckOfCards/blackjack"
 )
 
-// This is a sort of integration test between the ai in package ai and its use by the blackjack game in package blackjack
-// Very basic, just makes sure the game completes before an arbitrary 20 second 'time is up'.
+// This is a sort of integration test between a test ai and its use by the blackjack game.
+// Very basic, just makes sure the game completes before an arbitrary 'time is up'.
 func TestBlackJackGame(t *testing.T) {
 	var players []blackjack.Player
 	playerCount := 10

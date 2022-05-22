@@ -163,7 +163,7 @@ func TestAddJoker(t *testing.T) {
 
 func TestRemoveCard(t *testing.T) {
 	// Remove all 7s and 6s, expect to hit no 7s or 6s.
-	// Also expect deck sice to be 52-8 = 44
+	// Also expect deck size to be 52-8 = 44
 	d := deck.NewDeck()
 	d.RemoveCard(6)
 	d.RemoveCard(7)

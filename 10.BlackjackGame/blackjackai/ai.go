@@ -39,7 +39,7 @@ func (tp *AiPlayer) OfferBet() int {
 
 // Following this article for strategy: https://blog.betway.com/casino/blackjack-strategy-101-how-do-you-double-down-in-blackjack/
 // Solution is a branching if-tree, seems inelegant. May consider using a decision-matrix instead or something.
-func (tp *AiPlayer) OfferDoubleDown(d *blackjack.Dealer, h blackjack.Hand) bool {
+func (tp *AiPlayer) OfferDoubleDown(d blackjack.Dealer, h blackjack.Hand) bool {
 	var handContainsAce bool
 	handValue := h.Evaluate()
 	dealerFaceUp := d.FaceUp()
@@ -118,7 +118,7 @@ Hard totals: A hard total is any hand that does not start with an ace in it, or 
 from: https://www.blackjackapprenticeship.com/blackjack-strategy-charts/
 Assumption: double-down has already occured, skip those evaluations.
 */
-func (tp *AiPlayer) OfferHit(d *blackjack.Dealer, h blackjack.Hand) bool {
+func (tp *AiPlayer) OfferHit(d blackjack.Dealer, h blackjack.Hand) bool {
 	dealerFaceUp := d.FaceUp()
 	handContainsAce := handHasAces(h)
 
@@ -147,7 +147,7 @@ func (tp *AiPlayer) OfferHit(d *blackjack.Dealer, h blackjack.Hand) bool {
 }
 
 // Side bets are not worth it to this player.
-func (tp *AiPlayer) OfferSideBet(d *blackjack.Dealer, h blackjack.Hand) int {
+func (tp *AiPlayer) OfferSideBet(d blackjack.Dealer, h blackjack.Hand) int {
 	return 0
 }
 
@@ -164,7 +164,7 @@ A pair of 4’s splits against dealer 5 and 6, otherwise hit.
 A pair of 3’s splits against dealer 2 through 7, otherwise hit.
 A pair of 2’s splits against dealer 2 through 7, otherwise hit.
 */
-func (tp *AiPlayer) OfferSplit(d *blackjack.Dealer, h blackjack.Hand) bool {
+func (tp *AiPlayer) OfferSplit(d blackjack.Dealer, h blackjack.Hand) bool {
 	handHasAces := handHasAces(h)
 	dealerFaceUp := d.FaceUp()
 

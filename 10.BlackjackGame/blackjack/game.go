@@ -119,7 +119,7 @@ func (g *Game) playRound() {
 
 		} else if p.hands[0].Evaluate() >= 9 && p.hands[0].Evaluate() <= 11 {
 			if p.currentBet > p.points-p.currentBet {
-				if doubleDown = p.player.OfferDoubleDown(g.state.Dealer, p.hands[0]); doubleDown {
+				if doubleDown = p.player.OfferDoubleDown(*g.state.Dealer, p.hands[0]); doubleDown {
 					// Draw a 'hidden' card and close player options for the round; they won't enter into the else{} block.
 					p.hands[0].Cards = append(p.hands[0].Cards, g.drawCardsFromDeck(1)...)
 					p.currentBet = p.currentBet + p.currentBet
@@ -139,7 +139,7 @@ func (g *Game) playRound() {
 				// Check if split is possible, offer split to player. If accepted, loop may run multiple times.
 				// Ensure player has enough points for split ; each split costs the current bet.
 				// 3 splits costs 4 * the current bet, for example.
-				if p.offerSplit(g.state.Dealer, &p.hands[i]) {
+				if p.offerSplit(*g.state.Dealer, &p.hands[i]) {
 					p.hands[i] = Hand{
 						[]deck.Card{
 							p.hands[i].Cards[0],
@@ -156,7 +156,7 @@ func (g *Game) playRound() {
 					p.updateInfo()
 				}
 
-				hit = p.offerHit(g.state.Dealer, p.hands[i])
+				hit = p.offerHit(*g.state.Dealer, p.hands[i])
 				if hit {
 					p.hands[i].Cards = append(p.hands[i].Cards, g.drawCardsFromDeck(1)...)
 				}
@@ -204,7 +204,7 @@ func (g *Game) placeBets() {
 // Only offered when dealer is showing an ace.
 func (g *Game) evaluateSidebet(p PlayerInfo, h Hand) {
 	if g.state.Dealer.FaceUp() == 11 {
-		p.offerSideBet(g.state.Dealer, h)
+		p.offerSideBet(*g.state.Dealer, h)
 	}
 }
 

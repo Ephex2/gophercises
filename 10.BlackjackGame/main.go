@@ -8,7 +8,7 @@ import (
 func main() {
 	opts := blackjack.Options{
 		Decks:  10,
-		Rounds: 10,
+		Rounds: 3,
 	}
 
 	game := blackjack.New(opts)

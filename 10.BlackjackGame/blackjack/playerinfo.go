@@ -64,7 +64,7 @@ func (pi *PlayerInfo) offerBet() {
 
 // Asks player to place sidebet. Bets larger than current points are set to current points.
 // If bet is <= 0, player is Done()
-func (pi *PlayerInfo) offerSideBet(d *Dealer, h Hand) {
+func (pi *PlayerInfo) offerSideBet(d Dealer, h Hand) {
 	pi.updateInfo()
 	sidebet := pi.player.OfferSideBet(d, h)
 	totalCurrentBet := pi.currentBet * len(pi.hands)
@@ -78,7 +78,7 @@ func (pi *PlayerInfo) offerSideBet(d *Dealer, h Hand) {
 }
 
 // Offer player a split if both his cards are the same value, iff he has 2 cards in hand.
-func (pi *PlayerInfo) offerSplit(d *Dealer, h *Hand) bool {
+func (pi *PlayerInfo) offerSplit(d Dealer, h *Hand) bool {
 	if pi.canSplit(h) {
 		pi.updateInfo()
 		return pi.player.OfferSplit(d, *h)
@@ -99,7 +99,7 @@ func (pi *PlayerInfo) canSplit(h *Hand) bool {
 }
 
 // Asks player if they would like to hit or not.
-func (pi *PlayerInfo) offerHit(d *Dealer, h Hand) bool {
+func (pi *PlayerInfo) offerHit(d Dealer, h Hand) bool {
 	pi.updateInfo()
 	hit := pi.player.OfferHit(d, h)
 	return hit

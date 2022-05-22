@@ -4,7 +4,7 @@ import (
 	"github.com/Ephex2/gophercises/10.DeckOfCards/deck"
 )
 
-// A hand held by a player. Each hand has an individual bet associated with it to support splitting.
+// A hand held by a player.
 type Hand struct {
 	Cards []deck.Card // The set of cards in a given hand, at a given moment in the game.
 }
