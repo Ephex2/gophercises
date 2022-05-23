@@ -1,17 +1,28 @@
 package blackjack
 
-import "github.com/Ephex2/gophercises/10.BlackJackGame/deck"
+import (
+	"fmt"
+
+	"github.com/Ephex2/gophercises/10.BlackJackGame/deck"
+)
 
 type Dealer struct {
 	faceUp   []deck.Card
 	faceDown deck.Card
 }
 
-// Returns the int value of the card that the dealer is currently showing
+// Returns the hand that the dealer is currently facing showing.
 // Allows us to make the faceup []card property unexported, allowing us to keep players from editing it.
-func (d *Dealer) FaceUp() int {
+func (d *Dealer) FaceUp() Hand {
 	publicHand := Hand{d.faceUp}
-	return publicHand.Evaluate()
+	return publicHand
+}
+
+func (d *Dealer) PrintFaceUp() {
+	fmt.Println("Dealer is showing:")
+	for _, c := range d.faceUp {
+		fmt.Println(c.String())
+	}
 }
 
 // Draws the dealers initial hand

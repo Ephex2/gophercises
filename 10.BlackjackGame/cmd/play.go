@@ -9,8 +9,9 @@ import (
 
 	"strings"
 
+	aiplayer "github.com/Ephex2/gophercises/10.BlackJackGame/aiplayer"
 	"github.com/Ephex2/gophercises/10.BlackJackGame/blackjack"
-	"github.com/Ephex2/gophercises/10.BlackJackGame/blackjackai"
+	terminalplayer "github.com/Ephex2/gophercises/10.BlackJackGame/terminalplayer"
 	"github.com/spf13/cobra"
 )
 
@@ -24,9 +25,14 @@ var playCmd = &cobra.Command{
 	Short: "plays a game of BlackJack.",
 	Long:  `plays a game of BlackJack. The game will prompt for some options, then will prompt you with different game decisions. Number of AI, number of rounds against the house, and number of starting points can be modified.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		getUserInput("starting points", &numPoints)
-		getUserInput("ai players", &numAi)
-		getUserInput("rounds", &numRounds) //TODO: make an unlimited number of rounds possible.
+		/*
+			getUserInput("starting points", &numPoints)
+			getUserInput("ai players", &numAi)
+			getUserInput("rounds", &numRounds) //TODO: make an unlimited number of rounds possible.
+		*/
+		numAi := 1
+		numRounds := 3
+		numPoints := 10
 
 		opts := blackjack.Options{
 			Decks:          10,
@@ -37,11 +43,14 @@ var playCmd = &cobra.Command{
 
 		aiPlayers := []blackjack.Player{}
 		for i := 0; i < numAi; i++ {
-			ai := &blackjackai.AiPlayer{}
+			ai := &aiplayer.Player{}
 			aiPlayers = append(aiPlayers, ai)
 		}
 
-		game.Play(aiPlayers)
+		players := []blackjack.Player{&terminalplayer.Player{}}
+		players = append(players, aiPlayers...)
+
+		game.Play(players)
 	},
 }
 

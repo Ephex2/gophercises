@@ -50,8 +50,6 @@ func (pi *PlayerInfo) updateInfo() {
 // Asks player to place bets. Bets larger than current points are set to current points.
 // If bet is <= 0, player is Done()
 func (pi *PlayerInfo) offerBet() {
-	pi.currentBet = 0
-	pi.updateInfo()
 	betValue := pi.player.OfferBet()
 
 	if betValue > pi.GetPoints() {
@@ -117,9 +115,7 @@ func (pi *PlayerInfo) updatePoints(x int) error {
 	return nil
 }
 
-func (pi *PlayerInfo) newRound(g *Game) {
-	pi.currentBet = 0
-	pi.sideBet = 0
+func (pi *PlayerInfo) dealHand(g *Game) {
 	pi.hands = []Hand{{Cards: g.drawCardsFromDeck(2)}}
 	pi.updateInfo()
 }

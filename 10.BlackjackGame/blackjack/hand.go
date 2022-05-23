@@ -1,6 +1,8 @@
 package blackjack
 
 import (
+	"fmt"
+
 	"github.com/Ephex2/gophercises/10.BlackJackGame/deck"
 )
 
@@ -12,7 +14,7 @@ type Hand struct {
 // Returns the  value of a given hand, evaluating aces as either 1 or 11.
 // Busting returns a negative value of -1.
 // Always returns the highest possible legal value of a hand (so, A hand of Ace, Four, and Four would return 19).
-func (h *Hand) Evaluate() int {
+func (h Hand) Evaluate() int {
 	var sum int
 	var aceCounter int
 
@@ -46,4 +48,15 @@ func (h *Hand) Evaluate() int {
 
 	// Either alternate > 21 or aceCounter is 0 and sum is <> 21
 	return -1
+}
+
+func (h Hand) Print(tabs bool) {
+	for _, c := range h.Cards {
+		msg := c.String()
+		if tabs {
+			msg = "\t" + msg
+		}
+
+		fmt.Printf(msg + "\n")
+	}
 }

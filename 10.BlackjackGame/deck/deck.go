@@ -101,10 +101,10 @@ func (d *Deck) CustomSort(less func(i, j int) bool) {
 	sort.Slice(d.Cards, less)
 }
 
-// Shuffle deck, using current time as seed.
+// Shuffle deck, using current time squared as seed.
 // Based on: https://yourbasic.org/golang/shuffle-slice-array/
 func (d *Deck) Shuffle() {
-	rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().UnixNano() * time.Now().UnixNano())
 	rand.Shuffle(len(d.Cards), func(i, j int) { d.Cards[i], d.Cards[j] = d.Cards[j], d.Cards[i] })
 }
 
